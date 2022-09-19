@@ -3,8 +3,8 @@ package config
 import (
 	"fmt"
 
-    "go.containerssh.io/libcontainerssh/internal/structutils"
-    "go.containerssh.io/libcontainerssh/message"
+	"go.containerssh.io/libcontainerssh/internal/structutils"
+	"go.containerssh.io/libcontainerssh/message"
 )
 
 // AppConfig is the root configuration object of ContainerSSH.
@@ -12,33 +12,33 @@ import (
 type AppConfig struct {
 	// SSH contains the configuration for the SSH server.
 	// swagger:ignore
-	SSH SSHConfig `json:"ssh" yaml:"ssh"`
+	SSH SSHConfig `json:"ssh,omitempty" yaml:"ssh"`
 	// ConfigServer contains the settings for fetching the user-specific configuration.
 	// swagger:ignore
-	ConfigServer ClientConfig `json:"configserver" yaml:"configserver"`
+	ConfigServer ClientConfig `json:"configserver,omitempty" yaml:"configserver"`
 	// Auth contains the configuration for user authentication.
 	// swagger:ignore
-	Auth AuthConfig `json:"auth" yaml:"auth"`
+	Auth AuthConfig `json:"auth,omitempty" yaml:"auth"`
 	// Log contains the configuration for the logging level.
 	// swagger:ignore
-	Log LogConfig `json:"log" yaml:"log"`
+	Log LogConfig `json:"log,omitempty" yaml:"log"`
 	// Metrics contains the configuration for the metrics server.
 	// swagger:ignore
-	Metrics MetricsConfig `json:"metrics" yaml:"metrics"`
+	Metrics MetricsConfig `json:"metrics,omitempty" yaml:"metrics"`
 	// GeoIP contains the configuration for the GeoIP lookups.
 	// swagger:ignore
-	GeoIP GeoIPConfig `json:"geoip" yaml:"geoip"`
+	GeoIP GeoIPConfig `json:"geoip,omitempty" yaml:"geoip"`
 	// Audit contains the configuration for audit logging and log upload.
 	// swagger:ignore
-	Audit AuditLogConfig `json:"audit" yaml:"audit"`
+	Audit AuditLogConfig `json:"audit,omitempty" yaml:"audit"`
 	// Health contains the configuration for the health check service.
-	Health HealthConfig `json:"health" yaml:"health"`
+	Health HealthConfig `json:"health,omitempty" yaml:"health"`
 
 	// Security contains the security restrictions on what can be executed. This option can be changed from the config
 	// server.
-	Security SecurityConfig `json:"security" yaml:"security"`
+	Security SecurityConfig `json:"security,omitempty" yaml:"security"`
 	// Backend defines which backend to use. This option can be changed from the config server.
-	Backend Backend `json:"backend" yaml:"backend" default:"docker"`
+	Backend Backend `json:"backend,omitempty" yaml:"backend" default:"docker"`
 	// Docker contains the configuration for the docker backend. This option can be changed from the config server.
 	Docker DockerConfig `json:"docker,omitempty" yaml:"docker"`
 	// DockerRun is a placeholder for the removed DockerRun backend. Filling this with anything but nil will yield a
@@ -50,6 +50,7 @@ type AppConfig struct {
 	// KubeRun is a placeholder for the removed DockerRun backend. Filling this with anything but nil will yield a
 	// validation error.
 	KubeRun interface{} `json:"kuberun,omitempty"`
+	Envd    EnvdConfig  `json:"envd,omitempty"`
 	// SSHProxy is the configuration for the SSH proxy backend, which forwards requests to a backing SSH server.
 	SSHProxy SSHProxyConfig `json:"sshproxy,omitempty" yaml:"sshproxy"`
 }
@@ -69,6 +70,8 @@ func BackendValues() []Backend {
 // Validate checks if the configured backend is a valid one.
 func (b Backend) Validate() error {
 	switch b {
+	case BackendEnvd:
+		fallthrough
 	case BackendDocker:
 		fallthrough
 	case BackendKubernetes:
@@ -83,6 +86,7 @@ func (b Backend) Validate() error {
 }
 
 const (
+	BackendEnvd       Backend = "envd"
 	BackendDocker     Backend = "docker"
 	BackendKubernetes Backend = "kubernetes"
 	BackendSSHProxy   Backend = "sshproxy"
@@ -126,6 +130,8 @@ func (cfg *AppConfig) Validate(dynamic bool) error {
 	queue.add("security", &cfg.Security)
 	queue.add("backend", &cfg.Backend)
 	switch cfg.Backend {
+	case BackendEnvd:
+		queue.add("envd", &cfg.Envd)
 	case BackendDocker:
 		queue.add("docker", &cfg.Docker)
 	case BackendKubernetes:

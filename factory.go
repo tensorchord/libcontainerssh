@@ -7,6 +7,7 @@ import (
 	"go.containerssh.io/libcontainerssh/internal/auditlogintegration"
 	"go.containerssh.io/libcontainerssh/internal/authintegration"
 	"go.containerssh.io/libcontainerssh/internal/backend"
+	envd "go.containerssh.io/libcontainerssh/internal/envdserver"
 	"go.containerssh.io/libcontainerssh/internal/geoip"
 	"go.containerssh.io/libcontainerssh/internal/geoip/geoipprovider"
 	"go.containerssh.io/libcontainerssh/internal/health"
@@ -39,6 +40,12 @@ func New(cfg config.AppConfig, factory log.LoggerFactory) (Service, service.Life
 		return nil, nil, err
 	}
 	pool.Add(healthService)
+
+	envdServer, err := envd.New(logger.WithLabel("module", "envd-server"))
+	if err != nil {
+		return nil, nil, err
+	}
+	pool.Add(envdServer)
 
 	geoIPLookupProvider, err := geoip.New(cfg.GeoIP)
 	if err != nil {

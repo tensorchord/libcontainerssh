@@ -38,6 +38,7 @@ func (c KubernetesConfig) Validate() error {
 // KubernetesConnectionConfig configures the connection to the Kubernetes cluster.
 //goland:noinspection GoVetStructTag
 type KubernetesConnectionConfig struct {
+	KubeConfigPath string `json:"kubeConfigPath,omitempty" yaml:"kubeConfigPath"`
 	// Host is a host string, a host:port pair, or a URL to the Kubernetes apiserver. Defaults to kubernetes.default.svc.
 	Host string `json:"host,omitempty" yaml:"host" comment:"a host string, a host:port pair, or a URL to the base of the apiserver." default:"kubernetes.default.svc"`
 	// APIPath is a sub-path that points to the API root. Defaults to /api

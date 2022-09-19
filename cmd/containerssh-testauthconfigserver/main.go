@@ -138,6 +138,7 @@ type configHandler struct {
 func (c *configHandler) OnConfig(request config.Request) (config.AppConfig, error) {
 	cfg := config.AppConfig{}
 
+	cfg.Kubernetes.Pod.DisableAgent = true
 	if request.Username == "busybox" {
 		cfg.Docker.Execution.DockerLaunchConfig.ContainerConfig = &container.Config{}
 		cfg.Docker.Execution.DockerLaunchConfig.ContainerConfig.Image = "busybox"

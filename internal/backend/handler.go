@@ -7,19 +7,20 @@ import (
 	"sync"
 	"time"
 
-    auth2 "go.containerssh.io/libcontainerssh/auth"
-    "go.containerssh.io/libcontainerssh/config"
-    internalConfig "go.containerssh.io/libcontainerssh/internal/config"
-    "go.containerssh.io/libcontainerssh/internal/docker"
-    "go.containerssh.io/libcontainerssh/internal/kubernetes"
-    "go.containerssh.io/libcontainerssh/internal/metrics"
-    "go.containerssh.io/libcontainerssh/internal/security"
-    "go.containerssh.io/libcontainerssh/internal/sshproxy"
-    "go.containerssh.io/libcontainerssh/internal/sshserver"
-    "go.containerssh.io/libcontainerssh/internal/structutils"
-    "go.containerssh.io/libcontainerssh/log"
-    "go.containerssh.io/libcontainerssh/message"
-    "go.containerssh.io/libcontainerssh/metadata"
+	auth2 "go.containerssh.io/libcontainerssh/auth"
+	"go.containerssh.io/libcontainerssh/config"
+	internalConfig "go.containerssh.io/libcontainerssh/internal/config"
+	"go.containerssh.io/libcontainerssh/internal/docker"
+	envd "go.containerssh.io/libcontainerssh/internal/envdbackend"
+	"go.containerssh.io/libcontainerssh/internal/kubernetes"
+	"go.containerssh.io/libcontainerssh/internal/metrics"
+	"go.containerssh.io/libcontainerssh/internal/security"
+	"go.containerssh.io/libcontainerssh/internal/sshproxy"
+	"go.containerssh.io/libcontainerssh/internal/sshserver"
+	"go.containerssh.io/libcontainerssh/internal/structutils"
+	"go.containerssh.io/libcontainerssh/log"
+	"go.containerssh.io/libcontainerssh/message"
+	"go.containerssh.io/libcontainerssh/metadata"
 )
 
 type handler struct {
@@ -143,6 +144,15 @@ func (n *networkHandler) getConfiguredBackend(
 	backendErrorCounter metrics.Counter,
 ) (backend sshserver.NetworkConnectionHandler, failureReason error) {
 	switch appConfig.Backend {
+	case "envd":
+		backend, failureReason = envd.New(
+			n.remoteAddr,
+			n.connectionID,
+			appConfig.Envd,
+			backendLogger.WithLabel("backend", "envd"),
+			backendRequestsCounter,
+			backendErrorCounter,
+		)
 	case "docker":
 		backend, failureReason = docker.New(
 			n.remoteAddr,
