@@ -9,6 +9,9 @@ builds:
     goos:
       - linux
       - darwin
+    goarch:
+      - amd64
+      - arm64
     id: containerssh
     main: ./cmd/containerssh
     binary: containerssh
@@ -21,7 +24,6 @@ archives:
       darwin: Darwin
       linux: Linux
       windows: Windows
-      386: i386
       amd64: x86_64
 checksum:
   name_template: 'checksums.txt'
