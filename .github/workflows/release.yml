@@ -12,7 +12,7 @@ on:
 
 jobs:
   goreleaser:
-    if: github.repository == 'tensorchord/containerssh'
+    if: github.repository == 'tensorchord/libcontainerssh'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
