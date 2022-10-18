@@ -1,97 +1,68 @@
+# This is an example .goreleaser.yml file with some sensible defaults.
+# Make sure to check the documentation at https://goreleaser.com
 before:
   hooks:
-    - go vet
-    - go generate
-    - go test
+    - go mod tidy
 builds:
-  - id: containerssh
-    main: cmd/containerssh/main.go
-    binary: "containerssh"
-    goos:
-      - freebsd
-      - windows
-      - darwin
-      - linux
-    goarch:
-      - amd64
-    env:
+  - env:
       - CGO_ENABLED=0
-  - id: containerssh-auditlog-decoder
-    main: cmd/containerssh-auditlog-decoder/main.go
-    binary: "containerssh-auditlog-decoder"
     goos:
-      - freebsd
-      - windows
-      - darwin
       - linux
-    goarch:
-      - amd64
-    env:
-      - CGO_ENABLED=0
-  - id: containerssh-testauthconfigserver
-    main: cmd/containerssh-testauthconfigserver/main.go
-    binary: "containerssh-testauthconfigserver"
-    goos:
-      - freebsd
-      - windows
       - darwin
-      - linux
-    goarch:
-      - amd64
-    env:
-      - CGO_ENABLED=0
+    id: envd-server
+    main: ./cmd/envd-server
+    binary: envd-server
+    ldflags:
+      - -s -w
+      - -X github.com/tensorchord/envd-server/pkg/version.version={{ .Version }}
+      - -X github.com/tensorchord/envd-server/pkg/version.buildDate={{ .Date }}
+      - -X github.com/tensorchord/envd-server/pkg/version.gitCommit={{ .Commit }}
+      - -X github.com/tensorchord/envd-server/pkg/version.gitTreeState=clean
+      - -X github.com/tensorchord/envd-server/pkg/version.gitTag={{ .Tag }}
 archives:
-  - builds:
-      - containerssh
-      - containerssh-auditlog-decoder
-      - containerssh-testauthconfigserver
-    format_overrides:
-      - goos: windows
-        format: zip
-    files:
-      - LICENSE.md
-      - NOTICE.md
-      - config.example.yaml
-nfpms:
-  - vendor: ContainerSSH
-    homepage: https://containerssh.io
-    maintainer: Janos Pasztor <handshake@containerssh.io>
-    description: An SSH server that launches Docker containers and Kubernetes pods
-    license: MIT
+  - id: envd-server
+    format: binary
     builds:
-      - containerssh
-      - containerssh-testauthconfigserver
-      - containerssh-auditlog-decoder
-    formats:
-      - deb
-      - rpm
-      - apk
-    empty_folders:
-      - /etc/containerssh
-    bindir: /usr/sbin
-    suggests:
-      - docker
-    contents:
-      - src: config.example.yaml
-        dst: /etc/containerssh/config.yaml
-        type: config
-      - src: LICENSE.md
-        dst: /usr/share/doc/containerssh/LICENSE.md
-      - src: NOTICE.md
-        dst: /usr/share/doc/containerssh/NOTICE.md
-signs:
-  - id: sign-all
-    artifacts: all
-source:
-  enabled: true
-  name_template: '{{ .ProjectName }}-{{ .Version }}-source'
-dist: build
-release:
-  github:
-    owner: containerssh
-    name: containerssh
-  prerelease: auto
-  extra_files:
-    - glob: LICENSE.md
-    - glob: NOTICE.md
-    - glob: containerssh-authconfig-openapi.json
+      - envd-server
+    replacements:
+      darwin: Darwin
+      linux: Linux
+      windows: Windows
+      386: i386
+      amd64: x86_64
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: "{{ incpatch .Version }}-next"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^build:'
+      - '^ci:'
+      - '^docs:'
+      - '^test:'
+      - '^chore:'
+dockers:
+- image_templates:
+  - "tensorchord/envd-server:{{ .Version }}-amd64"
+  use: buildx
+  dockerfile: Dockerfile
+  ids:
+  - envd-server
+  build_flag_templates:
+  - "--platform=linux/amd64"
+- image_templates:
+  - "tensorchord/envd-server:{{ .Version }}-arm64v8"
+  use: buildx
+  goarch: arm64
+  ids:
+  - envd-server
+  dockerfile: Dockerfile
+  build_flag_templates:
+  - "--platform=linux/arm64/v8"
+docker_manifests:
+- name_template: tensorchord/envd-server:{{ .Version }}
+  image_templates:
+  - tensorchord/envd-server:{{ .Version }}-amd64
+  - tensorchord/envd-server:{{ .Version }}-arm64v8
